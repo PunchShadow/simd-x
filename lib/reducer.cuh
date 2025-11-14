@@ -100,6 +100,7 @@ class reducer
 		{
 			vertex_t warp_front_count;
 			index_t warp_input_off, warp_output_off, warp_dest_end;
+			const unsigned FULL_MASK = 0xffffffffu;
 
 			//Warp Stride 	
 			for(int i = 0; i < 32; i ++)
@@ -109,13 +110,13 @@ class reducer
 				//
 				//Quickly decide whether need to proceed on this thread
 				warp_front_count = my_front_count;
-				warp_front_count = __shfl(warp_front_count, i);
+				warp_front_count = __shfl_sync(FULL_MASK, warp_front_count, i);
 				if(warp_front_count == 0) continue;
 
 				warp_output_off = output_off;
 				warp_input_off = bin_off;
-				warp_output_off = __shfl(warp_output_off, i);
-				warp_input_off = __shfl(warp_input_off, i);
+				warp_output_off = __shfl_sync(FULL_MASK, warp_output_off, i);
+				warp_input_off = __shfl_sync(FULL_MASK, warp_input_off, i);
 				warp_dest_end = warp_output_off + warp_front_count;
 				warp_input_off += WOFF;
 				warp_output_off += WOFF;
@@ -339,6 +340,7 @@ class reducer
 			//	}
 			//	__syncthreads();
 
+			const unsigned FULL_MASK = 0xffffffffu;
 			//ballot for each threads of my warp
 			while(__syncthreads_or(my_beg < my_end))
 			{
@@ -347,15 +349,8 @@ class reducer
 				for(unsigned i = 0; i < 32; i ++)
 				{
 					//the whole warp is working on laneid=i's range
-					int curr_beg;
-					int curr_end;
-					if(i == WOFF) 
-					{
-						curr_beg = my_beg;
-					}   curr_end = my_end;
-
-					curr_beg = __shfl(curr_beg, i);
-					curr_end = __shfl(curr_end, i);
+					int curr_beg = __shfl_sync(FULL_MASK, my_beg, i);
+					int curr_end = __shfl_sync(FULL_MASK, my_end, i);
 
 					unsigned int vote = 0;
 					int predicate = 0;
@@ -368,7 +363,7 @@ class reducer
 							(curr_beg + WOFF, level, adj_list, beg_pos, 
 							 vert_status, vert_status_prev)==true;
 
-					vote = __ballot(predicate);
+					vote = __ballot_sync(FULL_MASK, predicate);
 					if(WOFF == i) flags = vote;
 				}
 
@@ -446,15 +441,8 @@ class reducer
 				for(int i = 0; i < 32; i ++)
 				{
 					//the whole warp is working on laneid=i's range
-					index_t curr_beg;
-					index_t curr_end;
-					if(i == WOFF) 
-					{
-						curr_beg = my_beg;
-					}   curr_end = my_end;
-
-					curr_beg = __shfl(my_beg, i);
-					curr_end = __shfl(my_end, i);
+					index_t curr_beg = __shfl_sync(FULL_MASK, my_beg, i);
+					index_t curr_end = __shfl_sync(FULL_MASK, my_end, i);
 
 					//in case this whole warp just goes out of boundary
 					//cannot terminate because needs to join syncthreads
@@ -469,7 +457,7 @@ class reducer
 							(curr_beg + WOFF, level, adj_list, beg_pos, 
 							 vert_status, vert_status_prev)==true;
 
-					vote = __ballot(predicate);
+					vote = __ballot_sync(FULL_MASK, predicate);
 					if(WOFF == i) flags = vote;
 				}
 

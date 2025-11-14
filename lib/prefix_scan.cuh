@@ -17,11 +17,12 @@ template<typename data_t, typename index_t>
 __forceinline__ __device__ void warp_scan_inc(data_t &value, const index_t laneId) 
 {
 	//kogge-stone scan method
-	value +=__shfl_up(value, 1, 32)*(laneId >= 1);
-	value +=__shfl_up(value, 2, 32)*(laneId >= 2);
-	value +=__shfl_up(value, 4, 32)*(laneId >= 4);
-	value +=__shfl_up(value, 8, 32)*(laneId >= 8);
-	value +=__shfl_up(value, 16, 32)*(laneId >= 16);
+	const unsigned FULL_MASK = 0xffffffffu;
+	value +=__shfl_up_sync(FULL_MASK, value, 1, 32)*(laneId >= 1);
+	value +=__shfl_up_sync(FULL_MASK, value, 2, 32)*(laneId >= 2);
+	value +=__shfl_up_sync(FULL_MASK, value, 4, 32)*(laneId >= 4);
+	value +=__shfl_up_sync(FULL_MASK, value, 8, 32)*(laneId >= 8);
+	value +=__shfl_up_sync(FULL_MASK, value, 16, 32)*(laneId >= 16);
 }
 
 template<typename data_t, typename index_t>

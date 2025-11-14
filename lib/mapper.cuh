@@ -381,6 +381,7 @@ class mapper
 					feature_t level)
 			{
 				const vertex_t WSZ = wqueue;
+				const unsigned FULL_MASK = 0xffffffffu;
 				index_t appr_work = 0;
 				for(index_t i = WID; i < WSZ; i += WGRNTY)
 				{
@@ -395,7 +396,8 @@ class mapper
                     //for(index_t j = beg + WOFF; j < end; j += 32)
                     //----------------
 
-					for(index_t j = beg + WOFF; __any(j < end); j += 32)
+					for(index_t j = beg + WOFF; 
+							__any_sync(FULL_MASK, j < end); j += 32)
 					{
 						feature_t dist = INFTY;
 						if(j<end)
@@ -418,7 +420,7 @@ class mapper
                         //}
                         //-----------------------------------
 
-						if(__any(predicate))
+						if(__any_sync(FULL_MASK, predicate))
 						{
 							if(!WOFF) vert_status[frontier] = level + 1;
 							appr_work ++;
@@ -441,7 +443,7 @@ class mapper
 					}
 #ifdef __AGG_SUM__
 					for (int j=16; j>=1; j>>=1)
-						frontier_vert_status += __shfl_xor(frontier_vert_status, j, 32);
+						frontier_vert_status += __shfl_xor_sync(FULL_MASK, frontier_vert_status, j, 32);
 					if(!WOFF)
                     {
                         vert_status[frontier] = frontier_vert_status;
@@ -449,7 +451,7 @@ class mapper
                     }
 #elif __AGG_SUM_AND_RATIO__					
                     for (int j=16; j>=1; j>>=1)
-						frontier_vert_status += __shfl_xor(frontier_vert_status, j, 32);
+						frontier_vert_status += __shfl_xor_sync(FULL_MASK, frontier_vert_status, j, 32);
 					if(!WOFF)
                     {
                         vert_status[frontier] = (0.15 + 0.85*frontier_vert_status)
@@ -460,7 +462,7 @@ class mapper
 					feature_t tmp;
 					for (int j=16; j>=1; j>>=1)
 					{
-						tmp = __shfl_xor(frontier_vert_status, j, 32);
+						tmp = __shfl_xor_sync(FULL_MASK, frontier_vert_status, j, 32);
 						if(frontier_vert_status > tmp) frontier_vert_status = tmp;
 					}
 					
@@ -473,7 +475,7 @@ class mapper
 
 #elif __AGG_SUB__
 					for (int j=16; j>=1; j>>=1)
-						frontier_vert_status += __shfl_xor(frontier_vert_status, j, 32);
+						frontier_vert_status += __shfl_xor_sync(FULL_MASK, frontier_vert_status, j, 32);
 					if(!WOFF)
                     {
 						vert_status[frontier]+=frontier_vert_status;

@@ -28,9 +28,17 @@ static void HandleError( cudaError_t err,
 
 //#define SML_MID 0	
 //#define MID_LRG	0
-#define GPUID		0	
-#define THDS_NUM	512	
-#define BLKS_NUM	512	
+#ifndef GPUID
+#define GPUID		0
+#endif
+
+#ifndef THDS_NUM
+#define THDS_NUM	512
+#endif
+
+#ifndef BLKS_NUM
+#define BLKS_NUM	512
+#endif
 //#define BLKS_NUM	96	
 
 #endif

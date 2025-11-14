@@ -9,7 +9,12 @@ commflags= --compiler-options -Wall -Xptxas -v -Xcudafe -\# --resource-usage
 #commflags+=-maxrregcount=64
 cucc= "$(shell which nvcc)"
 cc= "$(shell which gcc)"
-cuflags= -arch=sm_35  $(commflags) #-Xptxas -dlcm=cg#disable l1 cache
+# Allow overriding the target architecture: `make CUDA_ARCH=sm_90`.
+CUDA_ARCH ?= sm_86
+CUDA_VARCH ?= compute_86
+CUGENCODE ?= -gencode arch=$(CUDA_VARCH),code=$(CUDA_ARCH) \
+			 -gencode arch=$(CUDA_VARCH),code=$(CUDA_VARCH)
+cuflags= $(CUGENCODE)  $(commflags) #-Xptxas -dlcm=cg#disable l1 cache
 cuflags+=-D__VOTE__
 
 ifeq ($(monitor), 1)
@@ -50,4 +55,3 @@ test:$(exe)
 	./bfs /mnt/raid0_huge/hang/roadNet-CA/roadNet-CA.mtx_beg_pos.bin /mnt/raid0_huge/hang/roadNet-CA/roadNet-CA.mtx_csr.bin
 clean:
 	rm -rf *.o generator/*.o ${exe}
-
